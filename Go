@@ -1,0 +1,52 @@
+package main
+
+import (
+	"fmt"
+	"io/ioutil"
+	"log"
+	"os"
+	"time"
+
+	"github.com/google/go-cmp/cmp"
+	"github.com/spf13/viper"
+)
+
+func main() {
+
+	viper.SetConfigName("config")
+	viper.AddConfigPath("D:/Go/開発テスト用/")
+	err := viper.ReadInConfig()
+	if err != nil {
+		fmt.Println("設定ファイル読み込みエラー")
+	}
+	difft_01 := viper.GetString("difftarget_01")
+	difft_02 := viper.GetString("difftarget_02")
+	diffinfo := viper.GetString("diffinfo")
+
+	ddl_1 := searchFile(difft_01)
+	ddl_2 := searchFile(difft_02)
+
+	if cmp.Equal(ddl_1, ddl_2) {
+		fmt.Println("差分なし")
+	} else {
+		fmt.Println("差分あり")
+		difftext, err := os.OpenFile(diffinfo, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer difftext.Close()
+		fmt.Fprintln(difftext, cmp.Diff(ddl_1, ddl_2))
+	}
+}
+
+func searchFile(dir string) map[string]time.Time {
+	files, err := ioutil.ReadDir(dir)
+	if err != nil {
+		panic(err)
+	}
+	mapPaths := map[string]time.Time{}
+	for _, file := range files {
+		mapPaths[file.Name()] = file.ModTime()
+	}
+	return mapPaths
+}
