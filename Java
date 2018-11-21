@@ -1,8 +1,100 @@
-STR	15
-INT	5
-AGI	10
-LUCK	8
-PER	3
-CHA	3
-END	6
-	50
+package diff;
+
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.HashMap;
+import java.util.Map;
+
+public class Diff {
+
+	/**
+	 * 差分取得部分
+	 * @param args
+	 */
+	public static void main(String[] args) {
+
+		//比較するフォルダのパスを設定
+
+		Map<String,String>diffTarget_01 = searchFiles("D:/Go/開発テスト用/フォルダ１"); //対象1
+		Map<String,String>diffTarget_02 = searchFiles("D:/Go/開発テスト用/フォルダ２"); //対象2
+
+		if(diffTarget_01.equals(diffTarget_02)) {
+			System.out.println("差分なし");
+		}else {
+			System.out.println("差分あり");
+			for(Map.Entry<String, String>entry:diffTarget_01.entrySet()) {
+
+				//対象1のファイル名と更新日付を取得
+				String key = entry.getKey();
+				String value = entry.getValue();
+
+				//対象1のファイル名と一致する対象2の更新日付取得
+				String match = diffTarget_02.get(key);
+
+				//一致するファイルが無い場合、ファイル名のみ出力
+				//日付で差分あった場合はファイル名+日付
+				if(match != null) {
+					if(match.equals(value)) {
+					}else {
+						writeFile("【差分あり】"+"\r\n"+key+":"+value+"\r\n"+key+":"+match+"\r\n\r\n");
+					}
+				}else {
+					writeFile("【ファイルなし】"+"\r\n"+key+"\r\n\r\n");
+
+				}
+			}
+
+		}
+
+	}
+
+
+	/**
+	 * ファイル一覧取得部分
+	 * @param file
+	 * @return
+	 */
+	public static Map<String,String> searchFiles(String file){
+		File dir = new File(file);
+		File[] list = dir.listFiles();
+
+		Map<String,String>map = new HashMap<>();
+
+		for(int i=0; i<list.length; i++) {
+			//更新日付取得
+			long lastMod = list[i].lastModified();
+
+			//日付形式変換
+			SimpleDateFormat df = new SimpleDateFormat("yyyyMMdd HH:mm:ss");
+			String updateDate = df.format(lastMod);
+
+			//ファイル名取得
+			String fileName =list[i].getName();
+
+			//mapへファイル名+更新日付の値を格納
+			map.put(fileName, updateDate);
+		}
+
+		return map;
+
+	}
+
+
+	/**
+	 * ファイル出力処理部分
+	 * @param str
+	 */
+	public static void writeFile(String str) {
+		try {
+			//差分情報テキスト出力先
+			FileWriter fw = new FileWriter("D:/Go/開発テスト用/差分情報.txt",true);
+			fw.write(str);
+			fw.close();
+		} catch (IOException ex) {
+			ex.printStackTrace();
+		}
+	}
+
+}
